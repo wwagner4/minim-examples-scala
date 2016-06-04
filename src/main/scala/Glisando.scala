@@ -6,7 +6,7 @@ import ddf.minim.spi.MinimServiceProvider
 
 object Glisando extends App {
 
-  val fileLoader = new FileLoaderUserHome()
+  val fileLoader = FileLoaderUserHome("minim/glisando")
   val serviceProvider: MinimServiceProvider = new JSMinim(fileLoader)
   val minim = new Minim(serviceProvider)
   val out = minim.getLineOut()
@@ -20,11 +20,11 @@ object Glisando extends App {
   private def closeAfter(seconds: Int): Unit = {
     Thread.sleep(seconds * 1000)
     out.close()
-    println("closed after %d s" format seconds)
+    println("closed audio output after %d s" format seconds)
   }
 
 
-  class FileLoaderUserHome {
+  case class FileLoaderUserHome(path: String) {
 
     def sketchPath(fileName: String) = {
       val file = getCreateFile(fileName)
@@ -39,13 +39,14 @@ object Glisando extends App {
           throw new IllegalStateException("Error creating input stream. " + e.getMessage)
       }
     }
+
+    def getCreateFile(fileName: String): File = {
+      val home = new File(System.getProperty("user.home"))
+      val outDir = new File(home, path)
+      outDir.mkdirs()
+      new File(outDir, fileName)
+    }
   }
 
-  def getCreateFile(fileName: String): File = {
-    val home = new File(System.getProperty("user.home"))
-    val outDir = new File(home, "minim")
-    outDir.mkdirs()
-    new File(outDir, fileName)
-  }
 
 }
