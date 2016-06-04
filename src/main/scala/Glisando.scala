@@ -6,15 +6,23 @@ import ddf.minim.spi.MinimServiceProvider
 
 object Glisando extends App {
 
-  val  fileLoader = new FileLoaderUserHome();
-  val serviceProvider: MinimServiceProvider = new JSMinim(fileLoader);
-  val minim = new Minim(serviceProvider);
-  System.out.println("Created minim: " + minim);
-  val out = minim.getLineOut();
+  val fileLoader = new FileLoaderUserHome()
+  val serviceProvider: MinimServiceProvider = new JSMinim(fileLoader)
+  val minim = new Minim(serviceProvider)
+  val out = minim.getLineOut()
 
-  Thread.sleep(1000)
-  out.close()
-  println("closed after 1000ms")
+  out.pauseNotes()
+  out.playNote(400)
+  out.resumeNotes()
+
+  closeAfter(3)
+
+  private def closeAfter(seconds: Int): Unit = {
+    Thread.sleep(seconds * 1000)
+    out.close()
+    println("closed after %d s" format seconds)
+  }
+
 
   class FileLoaderUserHome {
 
