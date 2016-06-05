@@ -1,9 +1,9 @@
 import java.io.{File, FileInputStream, InputStream}
 
-import ddf.minim.{AudioOutput, Minim}
 import ddf.minim.javasound.JSMinim
-import ddf.minim.spi.{AudioOut, MinimServiceProvider}
-import ddf.minim.ugens.{ADSR, Instrument, Oscil, Waves}
+import ddf.minim.spi.MinimServiceProvider
+import ddf.minim.ugens._
+import ddf.minim.{AudioOutput, Minim}
 
 object Glisando extends App {
 
@@ -13,10 +13,44 @@ object Glisando extends App {
   val out = minim.getLineOut()
 
   out.pauseNotes()
-  out.playNote(0, 1.5f, Inst(out))
+
+
+  def freqs(base: Double, facts: List[Double], out: List[Double]): List[Double] = {
+    facts match {
+      case Nil => out
+      case fact :: rest =>
+        val b1 = base * fact
+        freqs(b1, rest, b1 :: out)
+
+    }
+  }
+
+  sealed trait Dir
+
+  case object Dir_Up extends Dir
+
+  case object Dir_Down extends Dir
+
+  val times = List(0, 1, 2, 3)
+  val directions: List[Dir] = List(Dir_Up, Dir_Down, Dir_Up, Dir_Down)
+  val freqFacts = List(1.0, 1.5, 0.4, 1.2)
+  val freqsList = freqs(500, freqFacts, Nil)
+
+  val notes = for (i <- 0 until 4) yield {
+    directions(i) match {
+      case Dir_Up => Note_Up(times(i), freqsList(i))
+      case Dir_Down => Note_Down(times(i), freqsList(i))
+    }
+  }
+
+  notes.foreach {
+    case Note_Up(time, freq) => out.playNote(time.toFloat, 1.5f, Up(freq, out))
+    case Note_Down(time, freq) => out.playNote(time.toFloat, 1.5f, Up(freq, out))
+  }
+
   out.resumeNotes()
 
-  closeAfter(3)
+  closeAfter(8)
 
   private def closeAfter(seconds: Int): Unit = {
     Thread.sleep(seconds * 1000)
@@ -24,11 +58,35 @@ object Glisando extends App {
     println("closed audio output after %d s" format seconds)
   }
 
+  sealed trait Note
 
-  case class Inst(out: AudioOutput) extends Instrument {
+  case class Note_Up(time: Double, freq: Double) extends Note
 
-    val oscil = new Oscil(333, 0.3f, Waves.SINE)
+  case class Note_Down(time: Double, freq: Double) extends Note
+
+
+  case class Up(freq: Double, out: AudioOutput) extends Inst {
+    override def freqFact: Double = 1.3
+  }
+
+  case class Down(freq: Double, out: AudioOutput) extends Inst {
+    override def freqFact: Double = 0.7
+  }
+
+  trait Inst extends Instrument {
+
+    def freq: Double
+
+    def freqFact: Double
+
+    def out: AudioOutput
+
+    val oscil = new Oscil(0f, 0.3f, Waves.SINE)
     val adsr = new ADSR(1f, 0.1f, 0.0f, 1f, 0.5f)
+
+    val line = new Line(4f, freq.toFloat, freq.toFloat * freqFact.toFloat)
+
+    line.patch(oscil.frequency)
 
 
     oscil.patch(adsr)
@@ -36,6 +94,7 @@ object Glisando extends App {
     override def noteOn(duration: Float): Unit = {
       adsr.patch(out)
       adsr.noteOn()
+      line.activate()
     }
 
     override def noteOff(): Unit = {
@@ -44,6 +103,7 @@ object Glisando extends App {
     }
 
   }
+
   case class FileLoaderUserHome(path: String) {
 
     def sketchPath(fileName: String) = {
@@ -67,7 +127,6 @@ object Glisando extends App {
       new File(outDir, fileName)
     }
   }
-
 
 
 }
