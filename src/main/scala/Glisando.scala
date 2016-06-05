@@ -15,16 +15,6 @@ object Glisando extends App {
   out.pauseNotes()
 
 
-  def freqs(base: Double, facts: List[Double], out: List[Double]): List[Double] = {
-    facts match {
-      case Nil => out
-      case fact :: rest =>
-        val b1 = base * fact
-        freqs(b1, rest, b1 :: out)
-
-    }
-  }
-
   sealed trait Dir
 
   case object Dir_Up extends Dir
@@ -33,16 +23,17 @@ object Glisando extends App {
 
   case class Note(time: Double, freq: Double, dir: Dir)
 
+  val fl = List(1.0, 1.5, 0.4, 1.2).foldLeft(List.empty[Double])((cuml, fact) => cuml match {
+    case Nil => 500 * fact :: cuml
+    case freq :: _ => freq * fact :: cuml
+  }).reverse
 
-  val times = List(0, 1, 2, 3)
-  val directions: List[Dir] = List(Dir_Up, Dir_Down, Dir_Up, Dir_Down)
-  val freqFacts = List(1.0, 1.5, 0.4, 1.2)
-  val freqsList = freqs(500, freqFacts, Nil)
-
-
-  val notes = for (i <- 0 until 4) yield {
-    Note(times(i), freqsList(i), directions(i))
-  }
+  println(fl)
+  val notes = List(
+    Note(0, fl(0), Dir_Up),
+    Note(1, fl(1), Dir_Down),
+    Note(3, fl(2), Dir_Down),
+    Note(4, fl(3), Dir_Up))
 
   notes.foreach {
     case Note(time, freq, Dir_Up) => out.playNote(time.toFloat, 1.5f, Up(freq, out))
