@@ -31,21 +31,22 @@ object Glisando extends App {
 
   case object Dir_Down extends Dir
 
+  case class Note(time: Double, freq: Double, dir: Dir)
+
+
   val times = List(0, 1, 2, 3)
   val directions: List[Dir] = List(Dir_Up, Dir_Down, Dir_Up, Dir_Down)
   val freqFacts = List(1.0, 1.5, 0.4, 1.2)
   val freqsList = freqs(500, freqFacts, Nil)
 
+
   val notes = for (i <- 0 until 4) yield {
-    directions(i) match {
-      case Dir_Up => Note_Up(times(i), freqsList(i))
-      case Dir_Down => Note_Down(times(i), freqsList(i))
-    }
+    Note(times(i), freqsList(i), directions(i))
   }
 
   notes.foreach {
-    case Note_Up(time, freq) => out.playNote(time.toFloat, 1.5f, Up(freq, out))
-    case Note_Down(time, freq) => out.playNote(time.toFloat, 1.5f, Up(freq, out))
+    case Note(time, freq, Dir_Up) => out.playNote(time.toFloat, 1.5f, Up(freq, out))
+    case Note(time, freq, Dir_Down) => out.playNote(time.toFloat, 1.5f, Down(freq, out))
   }
 
   out.resumeNotes()
@@ -57,12 +58,6 @@ object Glisando extends App {
     out.close()
     println("closed audio output after %d s" format seconds)
   }
-
-  sealed trait Note
-
-  case class Note_Up(time: Double, freq: Double) extends Note
-
-  case class Note_Down(time: Double, freq: Double) extends Note
 
 
   case class Up(freq: Double, out: AudioOutput) extends Inst {
