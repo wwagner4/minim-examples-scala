@@ -12,32 +12,30 @@ object Glisando extends App {
   val minim = new Minim(serviceProvider)
   val out = minim.getLineOut()
 
-  out.pauseNotes()
-
-
   sealed trait Dir
 
   case object Dir_Up extends Dir
 
   case object Dir_Down extends Dir
 
-  case class Note(time: Double, freq: Double, dir: Dir)
+  case class Note(time: Double, dur: Double, freq: Double, dir: Dir)
 
   val fl = List(1.0, 1.5, 0.4, 1.2).foldLeft(List.empty[Double])((cuml, fact) => cuml match {
     case Nil => 500 * fact :: cuml
     case freq :: _ => freq * fact :: cuml
   }).reverse
 
-  println(fl)
+  out.pauseNotes()
+
   val notes = List(
-    Note(0, fl(0), Dir_Up),
-    Note(1, fl(1), Dir_Down),
-    Note(3, fl(2), Dir_Down),
-    Note(4, fl(3), Dir_Up))
+    Note(0, 1.0, fl(0), Dir_Up),
+    Note(1, 2.0, fl(1), Dir_Down),
+    Note(3, 1.5, fl(2), Dir_Down),
+    Note(4, 1.0, fl(3), Dir_Up))
 
   notes.foreach {
-    case Note(time, freq, Dir_Up) => out.playNote(time.toFloat, 1.5f, Up(freq, out))
-    case Note(time, freq, Dir_Down) => out.playNote(time.toFloat, 1.5f, Down(freq, out))
+    case Note(time, dur, freq, Dir_Up) => out.playNote(time.toFloat, dur.toFloat, Up(freq, out))
+    case Note(time, dur, freq, Dir_Down) => out.playNote(time.toFloat, dur.toFloat, Down(freq, out))
   }
 
   out.resumeNotes()
