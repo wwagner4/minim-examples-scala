@@ -1,3 +1,5 @@
+package net.entelijan.tryout
+
 import java.io.{File, FileInputStream, InputStream}
 
 import ddf.minim.javasound.JSMinim
