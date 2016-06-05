@@ -7,11 +7,6 @@ import ddf.minim.{AudioOutput, Minim}
 
 object Glisando extends App {
 
-  val fileLoader = FileLoaderUserHome("minim/glisando")
-  val serviceProvider: MinimServiceProvider = new JSMinim(fileLoader)
-  val minim = new Minim(serviceProvider)
-  val out = minim.getLineOut()
-
   sealed trait Dir
 
   case object Dir_Up extends Dir
@@ -20,41 +15,48 @@ object Glisando extends App {
 
   case class Note(time: Double, dur: Double, freq: Double, dir: Dir)
 
-  val fl = List(1.0, 1.5, 0.4, 1.2).foldLeft(List.empty[Double])((cuml, fact) => cuml match {
-    case Nil => 500 * fact :: cuml
-    case freq :: _ => freq * fact :: cuml
-  }).reverse
+  val fileLoader = FileLoaderUserHome("minim/glisando")
+  val serviceProvider: MinimServiceProvider = new JSMinim(fileLoader)
+  val minim = new Minim(serviceProvider)
+  val out = minim.getLineOut()
 
-  out.pauseNotes()
+  val f1 = 4.0 / 3.0
+  val f2 = 3.0 / 2.0
+
+  val basePitch = 700.0
+  val pitches = List(basePitch / f1, basePitch / f2, basePitch, basePitch * f1, basePitch * f2)
 
   val notes = List(
-    Note(0, 1.0, fl(0), Dir_Up),
-    Note(1, 2.0, fl(1), Dir_Down),
-    Note(3, 1.5, fl(2), Dir_Down),
-    Note(4, 1.0, fl(3), Dir_Up))
+    Note(0, 1.0, pitches(0), Dir_Up),
+    Note(1, 2.0, pitches(1), Dir_Down),
+    Note(3, 0.5, pitches(4), Dir_Down),
+    Note(4, 1.0, pitches(3), Dir_Up),
+    Note(5, 1.0, pitches(1), Dir_Up),
+    Note(5.5, 2.0, pitches(0), Dir_Down),
+    Note(6, 0.5, pitches(1), Dir_Down),
+    Note(6.5, 1.0, pitches(3), Dir_Up),
+    Note(7, 1.0, pitches(4), Dir_Up),
+    Note(7.5, 2.0, pitches(2), Dir_Down),
+    Note(8, 0.5, pitches(1), Dir_Down),
+    Note(9, 1.0, pitches(0), Dir_Down))
 
+  out.pauseNotes()
   notes.foreach {
-    case Note(time, dur, freq, Dir_Up) => out.playNote(time.toFloat, dur.toFloat, Up(freq, out))
-    case Note(time, dur, freq, Dir_Down) => out.playNote(time.toFloat, dur.toFloat, Down(freq, out))
+    case Note(time, dur, freq, dir) =>
+      def inst(freq: Double, dir: Dir): Inst = dir match {
+        case Dir_Up => Up(freq, out)
+        case Dir_Down => Down(freq, out)
+      }
+      out.playNote(time.toFloat, dur.toFloat, inst(freq, dir))
   }
-
   out.resumeNotes()
 
-  closeAfter(8)
+  closeAfter(14)
 
   private def closeAfter(seconds: Int): Unit = {
     Thread.sleep(seconds * 1000)
     out.close()
     println("closed audio output after %d s" format seconds)
-  }
-
-
-  case class Up(freq: Double, out: AudioOutput) extends Inst {
-    override def freqFact: Double = 1.3
-  }
-
-  case class Down(freq: Double, out: AudioOutput) extends Inst {
-    override def freqFact: Double = 0.7
   }
 
   trait Inst extends Instrument {
@@ -65,10 +67,10 @@ object Glisando extends App {
 
     def out: AudioOutput
 
-    val oscil = new Oscil(0f, 0.3f, Waves.SINE)
-    val adsr = new ADSR(1f, 0.1f, 0.0f, 1f, 0.5f)
+    val oscil = new Oscil(0f, 0.3f, Waves.SQUARE)
+    val adsr = new ADSR(1f, 0.05f, 0.5f, 0.1f, 0.5f)
 
-    val line = new Line(4f, freq.toFloat, freq.toFloat * freqFact.toFloat)
+    val line = new Line(2f, freq.toFloat, freq.toFloat * freqFact.toFloat)
 
     line.patch(oscil.frequency)
 
@@ -88,6 +90,14 @@ object Glisando extends App {
 
   }
 
+  case class Up(freq: Double, out: AudioOutput) extends Inst {
+    override def freqFact: Double = 1.3
+  }
+
+  case class Down(freq: Double, out: AudioOutput) extends Inst {
+    override def freqFact: Double = 0.7
+  }
+
   case class FileLoaderUserHome(path: String) {
 
     def sketchPath(fileName: String) = {
@@ -104,7 +114,7 @@ object Glisando extends App {
       }
     }
 
-    def getCreateFile(fileName: String): File = {
+    private def getCreateFile(fileName: String): File = {
       val home = new File(System.getProperty("user.home"))
       val outDir = new File(home, path)
       outDir.mkdirs()
