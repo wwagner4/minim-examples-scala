@@ -7,7 +7,7 @@ import ddf.minim.spi.MinimServiceProvider
 import ddf.minim.ugens._
 import ddf.minim.{AudioOutput, Minim}
 
-object Glisando extends App {
+object GlisandoTryout extends App {
 
   sealed trait Dir
 
