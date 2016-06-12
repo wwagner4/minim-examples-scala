@@ -108,12 +108,7 @@ object Glisando extends App {
     }
 
     def createInput(fileName: String): InputStream = {
-      try {
-        new FileInputStream(fileName)
-      } catch {
-        case e: Exception =>
-          throw new IllegalStateException("Error creating input stream. " + e.getMessage)
-      }
+      new FileInputStream(fileName)
     }
 
     private def getCreateFile(fileName: String): File = {
