@@ -18,11 +18,11 @@ object TickrateTryout extends App {
   val minim = new Minim(fileLoader)
   val out = minim.getLineOut()
 
-  out.playNote(0f, 1f, new Inst(1.2f))
-  out.playNote(1f, 1f, new Inst(1.1f))
-  out.playNote(2f, 1f, new Inst(1.0f))
-  out.playNote(3f, 1f, new Inst(0.9f))
-  out.playNote(3f, 1f, new Inst(0.8f))
+  out.playNote(0f, 1f, new Inst(1.5f))
+  out.playNote(0.5f, 1f, new Inst(0.5f))
+  out.playNote(1f, 1f, new Inst(1.0f))
+  out.playNote(1.5f, 1f, new Inst(0.8f))
+  out.playNote(2f, 1f, new Inst(1.2f))
 
   Thread.sleep(5000)
   out.close()
@@ -30,18 +30,18 @@ object TickrateTryout extends App {
 
   case class Inst(rate: Double) extends Instrument {
 
-    val sampler = new Sampler("h1.wav", 3, minim)
+    val sampler = new Sampler("h1.wav", 4, minim)
     val tickrate = new TickRate(rate.toFloat)
 
     sampler.patch(tickrate)
 
     override def noteOn(duration: Float): Unit = {
       tickrate.patch(out)
-      sampler.begin
+      sampler.trigger
     }
 
     override def noteOff(): Unit = {
-      sampler.end
+      sampler.stop()
       tickrate.unpatch(out)
     }
   }
@@ -58,6 +58,7 @@ object TickrateTryout extends App {
 
     def createInput(fileName: String): InputStream = {
       val file = new File(path, fileName)
+      require(file.exists(), "File %s does not exist" format file.getAbsolutePath)
       new FileInputStream(file)
     }
   }
