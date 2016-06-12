@@ -32,18 +32,20 @@ object DelayTryout extends App {
   case class Inst() extends Instrument {
 
     val sampler = new Sampler("h1.wav", 4, minim)
-    val delay1 = new Delay(0.1f, 0.7f)
-    val delay2 = new Delay(0.2f, 0.5f)
-    val delay3 = new Delay(0.3f, 0.3f)
+    val delay1 = new Delay(0.1f, 0.8f)
+    val delay2 = new Delay(0.2f, 0.6f)
+    val delay3 = new Delay(0.3f, 0.4f)
     val sum = new Summer
+    val tickrate = new TickRate(0.8f)
 
     sampler.patch(delay1)
     sampler.patch(delay2)
-    sampler.patch(delay3)
+    sampler.patch(delay3).patch(tickrate)
 
+    sampler.patch(sum)
     delay1.patch(sum)
     delay2.patch(sum)
-    delay3.patch(sum)
+    tickrate.patch(sum)
 
     override def noteOn(duration: Float): Unit = {
       sum.patch(out)
