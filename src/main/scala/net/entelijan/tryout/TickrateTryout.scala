@@ -8,7 +8,7 @@ import ddf.minim.ugens._
 /**
   * Load a sample and apply the tickrate ugen to it.
   */
-object TickrateSample extends App {
+object TickrateTryout extends App {
 
   println("Tickrate with Sample")
 
