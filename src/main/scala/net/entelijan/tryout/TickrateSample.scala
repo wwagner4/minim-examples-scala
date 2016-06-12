@@ -42,6 +42,7 @@ object TickrateSample extends App {
 
     override def noteOff(): Unit = {
       sampler.end
+      tickrate.unpatch(out)
     }
   }
 
