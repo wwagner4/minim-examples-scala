@@ -18,20 +18,23 @@ object DelayTryout extends App {
   val minim = new Minim(fileLoader)
   val out = minim.getLineOut()
 
-  out.playNote(0f, 1f, Inst)
-  out.playNote(2f, 1f, Inst)
-  out.playNote(4f, 1f, Inst)
+  out.playNote(0f, 3f, Inst())
+  out.playNote(1f, 3f, Inst())
+  out.playNote(1.5f, 3f, Inst())
+  out.playNote(2f, 3f, Inst())
+  out.playNote(3f, 3f, Inst())
+  out.playNote(3.5f, 3f, Inst())
 
-  Thread.sleep(5000)
+  Thread.sleep(7000)
   out.close()
   println("Closed audio output")
 
-  case object Inst extends Instrument {
+  case class Inst() extends Instrument {
 
-    val sampler = new Sampler("h1.wav", 3, minim)
-    val delay1 = new Delay(0.1f, 0.5f)
-    val delay2 = new Delay(0.2f, 0.2f)
-    val delay3 = new Delay(0.3f, 0.1f)
+    val sampler = new Sampler("h1.wav", 4, minim)
+    val delay1 = new Delay(0.1f, 0.7f)
+    val delay2 = new Delay(0.2f, 0.5f)
+    val delay3 = new Delay(0.3f, 0.3f)
     val sum = new Summer
 
     sampler.patch(delay1)
@@ -44,11 +47,11 @@ object DelayTryout extends App {
 
     override def noteOn(duration: Float): Unit = {
       sum.patch(out)
-      sampler.begin
+      sampler.trigger()
     }
 
     override def noteOff(): Unit = {
-      sampler.end
+      sampler.stop()
       sum.unpatch(out)
     }
   }
